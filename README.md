@@ -1,4 +1,17 @@
 # sotsurunndeta
+このリポジトリは、作者からもらいた公開リポジトリをもとに作成したものであり、自分の卒業論文のデータを分析するため修正を加えたものである。
+
+作者からもらいたものは直接的に運行出来ないため、主に修正を加えたものはファイルmain_PAPER.v1.m中の内容でした。
+
+現在のコードを運行したい場合は、main_PAPER.v1.mから始める。
+
+また、運行前、13行目のファイル位置を変更すべき：maindir = 'C:\D\SHUJU\horizon_ddm-master_fulltext2\';　ここを現在のファイル位置を変更する。
+
+新しいデータを入れ替えたい場合：28行目の：sub = load_humanData_v1(datadir, 'allHorizonData_labo.csv', 'DDM_labo_fit.csv');を変更する。
+
+データ分析図のセーブに関して、main_PAPER.v1.mの中に、saveFigurePdfを検索し、その行目まで運行して、手作業でセーブする。
+
+なお、以下に記載されている英語の説明文は、元のリポジトリに含まれていた内容である。
 
 # horizon_ddm
 Code to reproduce figures and analysis for Feng, Wang, Zarnescu, and Wilson: "The dynamics of explore-exploit decisions reveal a signal-to-noise mechanism for random exploration"

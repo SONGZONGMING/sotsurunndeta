@@ -1,0 +1,73 @@
+325行 运行节
+
+%% MLE fits
+priorFlag = 1;
+for sn = 1:length(sub)
+    fit_logistic(sn) = fit_biasNoiseBonus_v2(sub(sn), priorFlag)
+end
+
+后运行下面这节
+
+%% ========================================================================
+%% 灵敏度分析：DDM 近似噪声 vs 逻辑模型噪声 (完美仿造版)
+%% ========================================================================
+% 修正：你的文件中 DDM 结果在 fit_MLE 中，Logistic 结果在 fit_logistic 中
+
+% 1. 提取与计算参数
+for sn = 1:length(fit_MLE)
+    % 从 XXfit 矩阵提取参数：行2=漂移率(drift), 行4=阈值(threshold)
+    % Horizon 1 (Column 1)
+    A1_dR = fit_MLE(sn).XXfit(2,1); 
+    z1_0  = fit_MLE(sn).XXfit(4,1);
+    % Horizon 6 (Column 2)
+    A6_dR = fit_MLE(sn).XXfit(2,2); 
+    z6_0  = fit_MLE(sn).XXfit(4,2);
+
+    % DDM 近似噪声计算公式
+    ns_1_ddm(sn) = 1./(A1_dR * z1_0 * 2*sqrt(2));
+    ns_6_ddm(sn) = 1./(A6_dR * z6_0 * 2*sqrt(2));
+    
+    % 提取 Logistic 模型拟合的噪声 (fit_logistic)
+    ns13_1_log(sn) = fit_logistic(sn).x(2,1); % Unequal [1 3] H1
+    ns13_6_log(sn) = fit_logistic(sn).x(2,2); % Unequal [1 3] H6
+    ns22_1_log(sn) = fit_logistic(sn).x(5,1); % Equal [2 2] H1
+    ns22_6_log(sn) = fit_logistic(sn).x(5,2); % Equal [2 2] H6
+end
+
+% 2. 排除异常被试 (漂移率必须 > 0)
+idx = arrayfun(@(s) s.XXfit(2,1) > 0, fit_MLE); 
+
+% 3. 完美仿造原绘图风格
+figure(100); clf;
+set(gcf, 'position', [663 530 600 300]);
+ax = easy_gridOfEqualFigures([0.26 0.1], [0.14 0.19 0.05]);
+
+% --- 左图：Unequal condition [1 3] ---
+axes(ax(1)); hold on;
+l = plot(ns13_1_log(idx), ns_1_ddm(idx), 'o'); 
+l(2) = plot(ns13_6_log(idx), ns_6_ddm(idx), 'o');
+[r1,p1] = corr(ns13_1_log(idx)', ns_1_ddm(idx)', 'type', 'spearman');
+[r2,p2] = corr(ns13_6_log(idx)', ns_6_ddm(idx)', 'type', 'spearman');
+plot([1e-3 100], [1e-3 100], 'k--', 'linewidth', 1)
+xlabel({'logistic model' 'noise std' }); ylabel({'DDM approximation' 'noise std' });
+legend({'horizon 1' 'horizon 6'}, 'location', 'northwest');
+title('unequal condition [1 3]');
+txt = text(0.03, 0.19, sprintf('r = %.2g', r1), 'units', 'normalized', 'color', AZblue);
+txt(2) = text(0.03, 0.07, sprintf('r = %.2g', r2), 'units', 'normalized', 'color', AZred);
+
+% --- 右图：Equal condition [2 2] ---
+axes(ax(2)); hold on;
+l(3) = plot(ns22_1_log(idx), ns_1_ddm(idx), 'o');
+l(4) = plot(ns22_6_log(idx), ns_6_ddm(idx), 'o');
+[r1,p1] = corr(ns22_1_log(idx)', ns_1_ddm(idx)', 'type', 'spearman');
+[r2,p2] = corr(ns22_6_log(idx)', ns_6_ddm(idx)', 'type', 'spearman');
+plot([1e-3 100], [1e-3 100], 'k--', 'linewidth', 1)
+xlabel({'logistic model' 'noise std' }); title('equal condition [2 2]');
+txt(3) = text(0.03, 0.19, sprintf('r = %.2g', r1), 'units', 'normalized', 'color', AZblue);
+txt(4) = text(0.03, 0.07, sprintf('r = %.2g', r2), 'units', 'normalized', 'color', AZred);
+
+% 4. 视觉格式美化
+set(l, 'markersize', 5, 'linewidth', 1);
+set(l([1 3]), 'color', AZblue); set(l([2 4]), 'color', AZred); set(txt, 'fontsize', 16);
+set(ax, 'xscale', 'log', 'yscale', 'log', 'tickdir', 'out', 'fontsize', 16, 'xtick', 10.^[-3:1:2]);
+addABCs(ax, [-0.11 0.1], 28)
